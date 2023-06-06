@@ -760,7 +760,10 @@ func (c *Client) AddRetryCondition(condition RetryConditionFunc) *Client {
 // Since v2.6.0
 func (c *Client) AddRetryAfterErrorCondition() *Client {
 	c.AddRetryCondition(func(response *Response, err error) bool {
-		return response.IsError()
+		if response!=nil {
+		    return response.IsError()
+		}
+		return false
 	})
 	return c
 }
