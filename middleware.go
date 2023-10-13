@@ -275,7 +275,7 @@ func addCredentials(c *Client, r *Request) error {
 }
 
 func requestLogger(c *Client, r *Request) error {
-	if r.Debug {
+	if r.Debug || r.requestDumpFunction != nil {
 		rr := r.RawRequest
 		rl := &RequestLog{Header: copyHeaders(rr.Header), Body: r.fmtBodyString(c.debugBodySizeLimit)}
 		if c.requestLog != nil {
@@ -305,7 +305,7 @@ func requestLogger(c *Client, r *Request) error {
 //_______________________________________________________________________
 
 func responseLogger(c *Client, res *Response) error {
-	if res.Request.Debug {
+	if res.Request.Debug || res.Request.requestDumpFunction != nil {
 		rl := &ResponseLog{Header: copyHeaders(res.Header()), Body: res.fmtBodyString(c.debugBodySizeLimit)}
 		if c.responseLog != nil {
 			if err := c.responseLog(rl); err != nil {
@@ -327,8 +327,12 @@ func responseLogger(c *Client, res *Response) error {
 			debugLog += fmt.Sprintf("BODY         :\n%v\n", rl.Body)
 		}
 		debugLog += "==============================================================================\n"
-
-		res.Request.log.Debugf("%s", debugLog)
+		if res.Request.requestDumpFunction != nil {
+			res.Request.requestDumpFunction(res.Request, debugLog)
+		}
+		if c.Debug {
+			res.Request.log.Debugf("%s", debugLog)
+		}
 	}
 
 	return nil
